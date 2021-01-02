@@ -8,6 +8,7 @@
         const ROOM_ID = "<%= roomId %>";
         const USER_ID = "<%= userId %>";
     </script>
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
 
     <style>
@@ -125,27 +126,93 @@
     </div>
     <script>
         const socket = io("/");
-        socket.emit("join-room", ROOM_ID, USER_ID);
-        console.log(ROOM_ID);
-
-        socket.on('user-connected', (userId) => {
-            console.log(`User ${userId} has connected to room ${ROOM_ID}`);
+        const myPeer = new Peer({
+                            host: location.hostname,
+                            port: 3001 || (location.protocol === 'https:' ? 443 : 80),
+                            path: '/'
+                            });
+        myPeer.on('open', userId => {
+            socket.emit('join-room', ROOM_ID, userId)
         });
+        const videoDiv = document.getElementById("video");        
+    
+        navigator.mediaDevices
+            .enumerateDevices()
+            .then(gotDevices)
+            .then(getStream)
+            .catch(() => console.log('error.'));
+        
+        function gotDevices(deviceInfos) {
+            const devicePair = {audio: false, video: false};
+            deviceInfos.forEach( deviceInfo => {
+                if (deviceInfo.kind === "audioinput") {
+                    devicePair.audio = true;
+                }
+                if (deviceInfo.kind === "videoinput") {
+                    devicePair.video = true;
+                }
+            });
 
-        const videoDiv = document.getElementById("video");
-        const videoEle = document.createElement('video');
-        videoEle.muted = true;
+            return devicePair;
+        }
+        
+        function getStream(devicePair) {
+                const constraints = {
+                    audio: devicePair.audio,
+                    video: devicePair.video
+                };
 
-        navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true
-        }).then(stream => {
+                navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+                    console.log(`Constrains | audio: ${constraints.audio}, video: ${constraints.video}`);
+                    console.log('Calling my own stream');
+                    const videoEle = document.createElement('video');
+                    videoEle.muted = true;
+                    addStream(videoEle, stream);
+
+                    myPeer.on('call', call => {
+                        call.answer(stream);
+                        const video = document.createElement('video');
+                        call.on('stream', userVideoStream => {
+                            console.log('Calling to get other stream', userVideoStream);
+                            addStream(video, userVideoStream);
+                        })
+                    })
+
+                    socket.on('user-connected', (userId) => {
+                        console.log(`User ${userId} connected to room ${ROOM_ID}`);
+                        sendStreamToUser(userId, stream);
+                    });
+                })
+                .catch(err => console.log('We got an errooooooor! -i.e time to rest'));
+        }
+
+        function addStream(videoEle, stream) {
             videoEle.srcObject = stream;
             videoEle.addEventListener('loadedmetadata', () => {
+                
                 videoEle.play();
             })
+
             videoDiv.append(videoEle);
-        });
+        }
+
+        function sendStreamToUser(userId, stream) { 
+            // When local user has fetched their stream
+            // they want to send it to any new user coming to room
+            const call = myPeer.call(userId, stream);
+            const video = document.createElement('video');
+            
+            // When other user is calling myPeer.call(..)
+            call.on('stream', userStream => {
+                console.log('If this is logged I should have other stream');
+                addStream(video, userStream);
+            });
+
+            // when other user is closing call remove video element
+            call.on('close', () => {
+                video.remove();
+            });
+        }
 
     </script>
 </body>
