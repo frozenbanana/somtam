@@ -3,14 +3,11 @@ const app = express();
 const server = require("http").Server(app);
 const io = require("socket.io")(server);
 const port = 3000;
-
-//const io = require("socket.io")();
-
-//listening socket io on different port
-//io.listen(4000);
+const path = require("path");
 
 app.set("view engine", "ejs");
-app.use(express.static(__dirname + "/public"));
+// app.use(express.static("/public"));
+app.use("/static", express.static(path.join(__dirname, "public")));
 
 let gUserIdCounter = 0;
 
@@ -25,34 +22,43 @@ app.get("/annons", (request, response) => {
 });
 
 app.get("/rooms", (request, response) => {
-    const randomRoomName = Math.floor(Math.random()*1000);
+    const randomRoomName = Math.floor(Math.random() * 1000);
     response.redirect(`/rooms/${randomRoomName}`);
 });
 
 app.get("/rooms/:id", (request, response) => {
+    const videoColors = ["pink", "purple", "blue", "red", "green", "teal"];
+    const index = Math.floor(Math.random() * videoColors.length);
+
     response.render("room", {
         roomId: request.params.id,
         userId: gUserIdCounter++,
+        videoColor: videoColors[index],
     });
 });
 
+interface RoomData {
+    roomId: String;
+    userId: Number;
+}
+
 // Socket
 io.on("connection", (socket: any) => {
-    socket.on("join-room", (roomId: String, userId: Number) => {
+    socket.on("join-room", (roomData: RoomData) => {
         // joining current socker to room
-        socket.join(roomId);
-        // tells everyone in room "I have connected this is my id"
-        socket.to(roomId).broadcast.emit("user-connected", userId);
+        socket.join(roomData.roomId);
+        // tells everyone in room "I have connected, this is my id"
+        socket.to(roomData.roomId).broadcast.emit("user-connected", roomData);
+
+        socket.on("disconnect", () => {
+            socket
+                .to(roomData.roomId)
+                .broadcast.emit("user-disconnected", roomData.userId);
+        });
     });
 });
 
 // Listen
-const srv = server.listen(port, () => {
+server.listen(port, () => {
     console.log(`Server is listening on port ${port}.`);
 });
-
-
-// Peer server for handling user connections
-// app.use('/peerjs', require('peer').ExpressPeerServer(srv, {
-// 	debug: true
-// }));
