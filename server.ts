@@ -7,6 +7,7 @@ const server = new http.Server(app);
 const io = socket(server);
 const port = 3000;
 const path = require("path");
+const DEBUG = true;
 
 app.set("view engine", "ejs");
 // app.use(express.static("/public"));
@@ -50,6 +51,11 @@ io.on("connection", (socket: any) => {
     socket.on("join-room", (roomData: RoomData) => {
         // joining current socker to room
         socket.join(roomData.roomId);
+
+        if (DEBUG)
+            console.log(
+                `user-connected called with roomData: ${roomData.roomId}`
+            );
         // tells everyone in room "I have connected, this is my id"
         socket.to(roomData.roomId).broadcast.emit("user-connected", roomData);
 
