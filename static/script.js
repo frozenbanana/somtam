@@ -1,3 +1,6 @@
+const DEBUG = true;
+const PEERS = {};
+let CONNECTION = undefined;
 // When the DOM is ready
 document.addEventListener(
     "DOMContentLoaded",
@@ -7,9 +10,8 @@ document.addEventListener(
             host: location.hostname,
             port: 3001 || (location.protocol === "https:" ? 443 : 80),
             path: "/",
+            debug: true,
         });
-        const DEBUG = true;
-        const PEERS = {};
 
         // on open will be launch when you successfully connect to PeerServer
         myPeer.on("open", (userId) => {
@@ -19,25 +21,6 @@ document.addEventListener(
             };
             if (DEBUG) console.log(`My local userid: ${localRoomData.userId}`);
             socket.emit("join-room", localRoomData);
-        });
-
-        // Receive messages
-        myPeer.on("connection", function (conn) {
-            console.log("connection event called", conn);
-            conn.on("open", function () {
-                // Receive messages
-                conn.on("data", function (data) {
-                    console.log("Received", data);
-                });
-
-                // Send messages
-                conn.send("Hello from script.js");
-            });
-
-            // console.log("connection event called", conn);
-            // conn.on("data", function (data) {
-            //     console.log("Received", data);
-            // });
         });
 
         const videoGrid = document.getElementById("video-grid");
@@ -50,22 +33,36 @@ document.addEventListener(
             const message = event.target.prompt.value;
             const chatLog = document.getElementById("chat-log");
 
-            // Send via peer
-            for (const [peerId, call] of Object.entries(PEERS)) {
-                console.log(
-                    "attempting to send to ",
-                    peerId,
-                    " message: ",
-                    message
-                );
-                myPeer.connect(peerId).send(message);
-            }
+            // // Send via peer
+            // for (const [peerId, call] of Object.entries(PEERS)) {
+            //     console.log(
+            //         "attempting to send to ",
+            //         peerId,
+            //         " message: ",
+            //         message
+            //     );
+            //     myPeer.connect(peerId).send(message);
+            // }
+
+            // Send new message
+            socket.emit("new_message", { message });
 
             // add it locally if successful
             const newMessageElement = document.createElement("li");
             newMessageElement.classList.add("chat-message", "my-message");
             newMessageElement.textContent = message;
             chatLog.insertBefore(newMessageElement, chatLog.childNodes[0]);
+
+            // Listen for responses
+            socket.on("new_message", (data) => {
+                const newMessageElement = document.createElement("li");
+                newMessageElement.classList.add(
+                    "chat-message",
+                    "other-message"
+                );
+                newMessageElement.textContent = data.message;
+                chatLog.insertBefore(newMessageElement, chatLog.childNodes[0]);
+            });
 
             // Reset message prompt
             event.target.prompt.value = "";

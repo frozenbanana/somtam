@@ -1,6 +1,7 @@
 import express from "express";
 import socket from "socket.io";
 import http from "http";
+import { v4 as uuidv4 } from "uuid";
 
 const app = express();
 const server = new http.Server(app);
@@ -8,6 +9,9 @@ const io = socket(server);
 const port = 3000;
 const path = require("path");
 const DEBUG = true;
+
+const users = [];
+const connnections = [];
 
 app.set("view engine", "ejs");
 // app.use(express.static("/public"));
@@ -26,8 +30,7 @@ app.get("/annons", (request, response) => {
 });
 
 app.get("/rooms", (request, response) => {
-    const randomRoomName = Math.floor(Math.random() * 1000);
-    response.redirect(`/rooms/${randomRoomName}`);
+    response.redirect(`/rooms/${uuidv4()}`);
 });
 
 app.get("/rooms/:id", (request, response) => {
@@ -36,7 +39,7 @@ app.get("/rooms/:id", (request, response) => {
 
     response.render("room", {
         roomId: request.params.id,
-        userId: gUserIdCounter++,
+        userId: uuidV4,
         videoColor: videoColors[index],
     });
 });
@@ -46,8 +49,21 @@ interface RoomData {
     userId: Number;
 }
 
+function RandomUserName(): string {
+    const a = ["Small", "Blue", "Ugly"];
+    const b = ["Bear", "Dog", "Banana"];
+
+    const rA = Math.floor(Math.random() * a.length);
+    const rB = Math.floor(Math.random() * b.length);
+    return a[rA] + b[rB];
+}
+
 // Socket
 io.on("connection", (socket: any) => {
+    console.log("New user connected");
+    //add the new socket to the connections array
+    connnections.push(socket);
+    socket.username = RandomUserName();
     socket.on("join-room", (roomData: RoomData) => {
         // joining current socker to room
         socket.join(roomData.roomId);
@@ -58,6 +74,17 @@ io.on("connection", (socket: any) => {
             );
         // tells everyone in room "I have connected, this is my id"
         socket.to(roomData.roomId).broadcast.emit("user-connected", roomData);
+
+        //listen on new_message
+        socket.on("new_message", (data: any) => {
+            //broadcast the new message
+            console.log("new_message event");
+
+            io.sockets.emit("new_message", {
+                message: data.message,
+                username: socket.username,
+            });
+        });
 
         socket.on("disconnect", () => {
             socket
