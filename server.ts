@@ -16,6 +16,18 @@ const connnections = [];
 app.set("view engine", "ejs");
 // app.use(express.static("/public"));
 app.use("/static", express.static(path.join(__dirname, "static")));
+app.use(
+    "/build/",
+    express.static(path.join(__dirname, "node_modules/three/build"))
+);
+app.use(
+    "/jsm/",
+    express.static(path.join(__dirname, "node_modules/three/examples/jsm"))
+);
+app.use(
+    "/three-orbit-controls/",
+    express.static(path.join(__dirname, "node_modules/three-orbit-controls"))
+);
 
 let gUserIdCounter = 0;
 
@@ -39,7 +51,7 @@ app.get("/rooms/:id", (request, response) => {
 
     response.render("room", {
         roomId: request.params.id,
-        userId: uuidV4,
+        userId: RandomUserName(),
         videoColor: videoColors[index],
     });
 });
@@ -76,15 +88,13 @@ io.on("connection", (socket: any) => {
         socket.to(roomData.roomId).broadcast.emit("user-connected", roomData);
 
         //listen on new_message
-        socket.on("new_message", (data: any) => {
-            //broadcast the new message
-            console.log("new_message event");
-
-            io.sockets.emit("new_message", {
-                message: data.message,
-                username: socket.username,
-            });
-        });
+        socket.on(
+            "new_message",
+            (data: { sender: String; message: String }) => {
+                //broadcast the new message
+                io.sockets.emit("new_message", data);
+            }
+        );
 
         socket.on("disconnect", () => {
             socket

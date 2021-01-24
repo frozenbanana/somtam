@@ -1,12 +1,14 @@
 const DEBUG = true;
 const PEERS = {};
 let CONNECTION = undefined;
+const chatLog = document.getElementById("chat-log");
+let myPeer = {};
 // When the DOM is ready
 document.addEventListener(
     "DOMContentLoaded",
     function (event) {
         const socket = io("/");
-        const myPeer = new Peer({
+        myPeer = new Peer({
             host: location.hostname,
             port: 3001 || (location.protocol === "https:" ? 443 : 80),
             path: "/",
@@ -31,21 +33,12 @@ document.addEventListener(
 
             event.preventDefault();
             const message = event.target.prompt.value;
-            const chatLog = document.getElementById("chat-log");
-
-            // // Send via peer
-            // for (const [peerId, call] of Object.entries(PEERS)) {
-            //     console.log(
-            //         "attempting to send to ",
-            //         peerId,
-            //         " message: ",
-            //         message
-            //     );
-            //     myPeer.connect(peerId).send(message);
-            // }
 
             // Send new message
-            socket.emit("new_message", { message });
+            socket.emit("new_message", {
+                sender: myPeer.id,
+                message: message,
+            });
 
             // add it locally if successful
             const newMessageElement = document.createElement("li");
@@ -53,8 +46,15 @@ document.addEventListener(
             newMessageElement.textContent = message;
             chatLog.insertBefore(newMessageElement, chatLog.childNodes[0]);
 
-            // Listen for responses
-            socket.on("new_message", (data) => {
+            // Reset message prompt
+            event.target.prompt.value = "";
+        };
+
+        // Listen for responses
+        socket.on("new_message", (data) => {
+            if (data.sender !== myPeer.id) {
+                if (DEBUG) console.log(`${data.sender} - ${myPeer.id}`);
+                if (DEBUG) console.log(data);
                 const newMessageElement = document.createElement("li");
                 newMessageElement.classList.add(
                     "chat-message",
@@ -62,11 +62,8 @@ document.addEventListener(
                 );
                 newMessageElement.textContent = data.message;
                 chatLog.insertBefore(newMessageElement, chatLog.childNodes[0]);
-            });
-
-            // Reset message prompt
-            event.target.prompt.value = "";
-        };
+            }
+        });
 
         navigator.mediaDevices
             .enumerateDevices()
