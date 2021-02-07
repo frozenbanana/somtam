@@ -15,6 +15,8 @@ document.addEventListener(
             debug: true,
         });
 
+        console.log("This is my peer", myPeer);
+
         // on open will be launch when you successfully connect to PeerServer
         myPeer.on("open", (userId) => {
             const localRoomData = {
@@ -158,7 +160,7 @@ document.addEventListener(
                         setupStreamToNewUser(roomData.userId, myStream);
                     });
                 })
-                .catch((err) => console.log("We got an errooooooor!"));
+                .catch((err) => console.log(err, "We got an errooooooor!"));
         }
 
         function addStream(videoEle, stream) {
