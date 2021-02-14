@@ -1,63 +1,42 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, forwardRef, useState } from "react";
 import { Canvas, useFrame } from "react-three-fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, Stars } from "@react-three/drei";
+import { Physics, usePlane, useBox } from "use-cannon";
 import Webcam from "react-webcam";
 import { VideoTexture } from "three";
 import Player from "./Player";
+import Box from "./Box";
 
 function Plane({ ...props }) {
+    const [ref] = usePlane(() => ({
+        rotation: props.rotation,
+        ...props,
+    }));
+
     return (
-        <mesh {...props} receiveShadow>
-            <planeBufferGeometry args={[500, 500, 1, 1]} />
-            {props.texture ? (
-                <meshStandardMaterial map={props.texture} />
+        <mesh ref={ref} receiveShadow>
+            <planeBufferGeometry attach="geometry" args={[30, 30, 1, 1]} />
+            <meshStandardMaterial attach="material" color="green" />
+
+            {/* <shadowMaterial attachArray="material" transparent opacity={0.2} /> */}
+
+            {/* {props.texture ? (
+                <meshStandardMaterial
+                    attachArray="material"
+                    map={props.texture}
+                />
             ) : (
-                <shadowMaterial transparent opacity={0.2} />
-            )}
+                <meshStandardMaterial attachArray="material" color="brown" />
+            )} */}
         </mesh>
     );
 }
 
-function Box(props) {
-    // This reference will give us direct access to the mesh
-    const mesh = useRef();
-
-    // Set up state for the hovered and active state
-    const [hovered, setHover] = useState(false);
-    const [active, setActive] = useState(false);
-
-    // Rotate mesh every frame, this is outside of React without overhead
-    useFrame(() => {
-        mesh.current.rotation.y += 0.01;
-    });
-
-    const color = hovered ? "hotpink" : "orange";
+function Circle({ ...props }) {
     return (
-        <mesh
-            {...props}
-            ref={mesh}
-            scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
-            onClick={(event) => setActive(!active)}
-            onPointerOver={(event) => setHover(true)}
-            onPointerOut={(event) => setHover(false)}
-        >
-            <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
-
-            {props.texture ? (
-                <meshStandardMaterial
-                    attachArray="material"
-                    repeat={[1, 1]}
-                    map={props.texture}
-                />
-            ) : (
-                <meshStandardMaterial attachArray="material" color={color} />
-            )}
-
-            <meshStandardMaterial attachArray="material" color={color} />
-            <meshStandardMaterial attachArray="material" color={color} />
-            <meshStandardMaterial attachArray="material" color={color} />
-            <meshStandardMaterial attachArray="material" color={color} />
-            <meshStandardMaterial attachArray="material" color={color} />
+        <mesh {...props}>
+            <circleBufferGeometry args={[4, 64]} />
+            <meshBasicMaterial color={props.color} />
         </mesh>
     );
 }
@@ -102,11 +81,12 @@ function Game() {
             <Canvas
                 style={{
                     height: "100vh",
-                    background: "#dfdfdf",
+                    background: "#0a0a0a", //"#dfdfdf",
                 }}
                 shadowMap
             >
-                <OrbitControls />
+                {/* <OrbitControls /> */}
+                <Stars />
                 <hemisphereLight
                     skyColor={"black"}
                     groundColor={0xffffff}
@@ -127,18 +107,20 @@ function Game() {
                     <circleBufferGeometry args={[4, 64]} />
                     <meshBasicMaterial color="lightblue" />
                 </mesh>
-                <Plane
-                    rotation={[-0.5 * Math.PI, 0, 0]}
-                    position={[0, -2, 0]}
-                />
-                <Box
-                    texture={streamTexture}
-                    position={[-2, 1, 0]}
-                    receiveShadow
-                    castShadow
-                />
-                <Box position={[2, 1, 0]} receiveShadow castShadow />
-                <Player position={[1, 1, 0]}></Player>
+                <Physics>
+                    <Plane
+                        rotation={[-0.5 * Math.PI, 0, 0]}
+                        position={[0, -2, -5]}
+                    />
+                    <Box
+                        texture={streamTexture}
+                        position={[-4, 1, 0]}
+                        receiveShadow
+                        castShadow
+                    />
+                    <Box position={[-2, 1, 0]} receiveShadow castShadow />
+                    <Player position={[0, 1, 0]} castShadow></Player>
+                </Physics>
             </Canvas>
         </>
     );

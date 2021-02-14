@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@react-three/cannon": "^0.5.4",
     "@react-three/drei": "^3.7.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
@@ -43,7 +44,8 @@
     "react-router-dom": "^5.2.0",
     "react-three-fiber": "^5.3.18",
     "react-webcam": "^5.2.3",
-    "three": "^0.125.0",
+    "three": "^0.124.0",
+    "use-cannon": "^0.5.3",
     "use-key-state": "^0.1.8"
   }
 }
