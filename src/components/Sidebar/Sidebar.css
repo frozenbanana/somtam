@@ -1,0 +1,4 @@
+aside {
+    grid-area: side;
+    background-color: rgb(59, 52, 63);
+}

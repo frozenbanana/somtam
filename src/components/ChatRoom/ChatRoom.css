@@ -1,0 +1,58 @@
+.chat__container {
+    display: grid;
+    grid-auto-columns: 1fr 3fr;
+    grid-template-areas:
+        "side chat"
+        "side chat"
+        "side inp";
+    min-height: 100vh;
+    width: 100%;
+    background-color: rgb(40, 37, 53);
+}
+
+main {
+    grid-area: chat;
+    padding: 10px;
+    height: 80vh;
+    overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+}
+
+form {
+    grid-area: inp;
+    bottom: 0;
+    background-color: rgb(24, 23, 23);
+    display: flex;
+    font-size: 1.5rem;
+}
+
+form button {
+    background-color: rgb(56, 56, 143);
+}
+
+.message {
+    display: flex;
+    align-items: center;
+}
+
+.sent {
+    flex-direction: row-reverse;
+}
+
+.sent p {
+    color: white;
+    background: #0b93f6;
+    align-self: flex-end;
+}
+.received p {
+    background: #e5e5ea;
+    color: black;
+}
+
+img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin: 2px 5px;
+}
