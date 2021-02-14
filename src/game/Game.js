@@ -16,8 +16,8 @@ function Plane({ ...props }) {
     return (
         <mesh ref={ref} receiveShadow>
             <planeBufferGeometry attach="geometry" args={[30, 30, 1, 1]} />
-            <meshStandardMaterial attach="material" color="green" />
 
+            <meshStandardMaterial color="green" />
             {/* <shadowMaterial attachArray="material" transparent opacity={0.2} /> */}
 
             {/* {props.texture ? (
@@ -114,11 +114,11 @@ function Game() {
                     />
                     <Box
                         texture={streamTexture}
-                        position={[-4, 1, 0]}
+                        position={[-4, 0.5, 0]}
                         receiveShadow
                         castShadow
                     />
-                    <Box position={[-2, 1, 0]} receiveShadow castShadow />
+                    <Box position={[-2, 0.5, 0]} receiveShadow castShadow />
                     <Player position={[0, 1, 0]} castShadow></Player>
                 </Physics>
             </Canvas>
