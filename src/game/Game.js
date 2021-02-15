@@ -42,42 +42,9 @@ function Circle({ ...props }) {
 }
 
 function Game() {
-    const webcamRef = React.useRef(null);
-    const [streamTexture, setStreamTexture] = useState(null);
-
-    const onWebcamRefChange = useCallback(
-        async (newWebcamRef) => {
-            webcamRef.current = newWebcamRef;
-            console.log("onWebcamRefChange called!", webcamRef);
-            if (webcamRef?.current?.video) {
-                console.log(
-                    "setStreamTexture called!",
-                    webcamRef?.current?.video
-                );
-
-                setStreamTexture(new VideoTexture(webcamRef.current.video));
-            }
-        },
-        [webcamRef]
-    );
-
     const d = 8.25;
-
     return (
         <>
-            <div
-                style={{ position: "absolute", right: 10, top: 150, zIndex: 1 }}
-            >
-                <Webcam
-                    width="200"
-                    height="113"
-                    mirrored
-                    id="webcam"
-                    audio={false}
-                    ref={onWebcamRefChange}
-                    screenshotFormat="image/jpeg"
-                />
-            </div>
             <Canvas
                 style={{
                     height: "100vh",
@@ -85,7 +52,6 @@ function Game() {
                 }}
                 shadowMap
             >
-                {/* <OrbitControls /> */}
                 <Stars />
                 <hemisphereLight
                     skyColor={"black"}
@@ -112,13 +78,6 @@ function Game() {
                         rotation={[-0.5 * Math.PI, 0, 0]}
                         position={[0, -2, -5]}
                     />
-                    <Box
-                        texture={streamTexture}
-                        position={[-4, 0.5, 0]}
-                        receiveShadow
-                        castShadow
-                    />
-                    <Box position={[-2, 0.5, 0]} receiveShadow castShadow />
                     <Player position={[0, 1, 0]} castShadow></Player>
                 </Physics>
             </Canvas>

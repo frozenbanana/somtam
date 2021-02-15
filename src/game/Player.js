@@ -1,14 +1,32 @@
 import React, { useCallback, useRef, useState, useEffect } from "react";
 import { useThree, useFrame } from "react-three-fiber";
-import { Vector3 } from "three";
+import { Vector3, VideoTexture } from "three";
 import { useSphere } from "use-cannon";
-import { OrbitControls } from "@react-three/drei";
-
+import { OrbitControls, Html } from "@react-three/drei";
+import Webcam from "react-webcam";
 import { useKeyboardControls } from "../hooks/useKeyboardControls";
-
+import Box from "./Box";
 const SPEED = 4;
 
 function Player(props) {
+    const webcamRef = useRef();
+    const [streamTexture, setStreamTexture] = useState(null);
+    const onWebcamRefChange = useCallback(
+        async (newWebcamRef) => {
+            webcamRef.current = newWebcamRef;
+            console.log("onWebcamRefChange called!", webcamRef);
+            if (webcamRef?.current?.video) {
+                console.log(
+                    "setStreamTexture called!",
+                    webcamRef?.current?.video
+                );
+
+                setStreamTexture(new VideoTexture(webcamRef.current.video));
+            }
+        },
+        [webcamRef]
+    );
+
     const controlsRef = useRef();
     const [ref, api] = useSphere(() => ({
         mass: 10,
@@ -51,10 +69,29 @@ function Player(props) {
         <>
             <OrbitControls ref={controlsRef} args={[camera, gl.domElement]} />
 
-            <mesh ref={ref}>
-                <sphereBufferGeometry args={[1, 32, 32]} />
-                <meshStandardMaterial color="purple" />
-            </mesh>
+            <Html
+                center // Adds a -50%/-50% css transform (default: false)
+                zIndexRange={[10, 0]} // Z-order range (default=[16777271, 0])
+            >
+                <Webcam
+                    width="200"
+                    height="113"
+                    mirrored
+                    id="webcam"
+                    audio={false}
+                    ref={onWebcamRefChange}
+                    screenshotFormat="image/jpeg"
+                    hidden
+                />
+            </Html>
+
+            <Box
+                ref={ref}
+                texture={streamTexture}
+                position={[-4, 0.5, 0]}
+                receiveShadow
+                castShadow
+            />
         </>
     );
 }
