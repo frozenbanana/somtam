@@ -1,11 +1,11 @@
-import React, { useCallback, useRef, forwardRef, useState } from "react";
-import { Canvas, useFrame } from "react-three-fiber";
-import { OrbitControls, Stars } from "@react-three/drei";
-import { Physics, usePlane, useBox } from "use-cannon";
-import Webcam from "react-webcam";
-import { VideoTexture } from "three";
+import React, { useEffect } from "react";
+import socketIOClient from "socket.io-client";
+import { Canvas } from "react-three-fiber";
+import { Stars } from "@react-three/drei";
+import { Physics, usePlane } from "use-cannon";
 import Player from "./Player";
-import Box from "./Box";
+
+const ENDPOINT = "http://localhost:5000/";
 
 function Plane({ ...props }) {
     const [ref] = usePlane(() => ({
@@ -43,6 +43,41 @@ function Circle({ ...props }) {
 
 function Game() {
     const d = 8.25;
+
+    useEffect(() => {
+        const socket = socketIOClient(ENDPOINT, { transports: ["websocket"] });
+        socket.on("FromAPI", (data) => {
+            console.log("SOCKET", data);
+        });
+
+        // NEXT STEP: Create a game state and a reference to scene
+        //On connection server sends the client his ID
+        // socket.on('introduction', (_id, _clientNum, _ids)=>{
+
+        //     for(let i = 0; i < _ids.length; i++){
+        //     if(_ids[i] != _id){
+        //         clients[_ids[i]] = {
+        //         mesh: new THREE.Mesh(
+        //             new THREE.BoxGeometry(1,1,1),
+        //             new THREE.MeshNormalMaterial()
+        //         )
+        //         }
+
+        //         //Add initial users to the scene
+        //         glScene.scene.add(clients[_ids[i]].mesh);
+        //     }
+        //     }
+
+        //     console.log(clients);
+
+        //     id = _id;
+        //     console.log('My ID is: ' + id);
+
+        // });
+
+        return () => socket.disconnect();
+    }, []);
+
     return (
         <>
             <Canvas
